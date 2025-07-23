@@ -62,10 +62,68 @@ parameters.max    = 1 * ones(length(optIdx), 1);
 % parameters.guess  = w_init;
 parameters.guess = w_guesses;
 
-
 disp('Initial guess:');
 disp(parameters.guess');
 
+%% Define optimization variables: n/EC50
+% % Parameters to optimize (same optIdx)
+% n_params = length(optIdx);
+% 
+% % Define EC50 and n bounds
+% n_mu = 1.4;      % Example clustering around 1.4
+% n_sigma = 0.2;
+% n_lower = 0.5;
+% n_upper = 4.0;
+% 
+% EC50_lower = 0.01;  % Avoiding zero
+% EC50_upper = 0.7;   % Upper limit, will be adjusted dynamically
+% 
+% % Preallocate guess matrices
+% EC50_guesses = zeros(n_params, n_params);
+% n_guesses = zeros(n_params, n_params);
+% 
+% % Generate guesses with constraints
+% for i = 1:n_params
+%     for j = 1:n_params
+%         % Sample n within bounds
+%         n_val = n_mu + n_sigma * randn;
+%         while n_val < n_lower || n_val > n_upper
+%             n_val = n_mu + n_sigma * randn;
+%         end
+% 
+%         % Max allowable EC50 for this n_val
+%         EC50_max = (0.5)^(1 / n_val);  
+%         EC50_max = min(EC50_max, EC50_upper);
+% 
+%         % Sample EC50 within bounds and respecting constraint
+%         ec_val = EC50_max * rand();  % Uniform within 0 to EC50_max
+%         if ec_val < EC50_lower
+%             ec_val = EC50_lower;
+%         end
+% 
+%         % Store values
+%         n_guesses(i, j) = round(n_val, 4);
+%         EC50_guesses(i, j) = round(ec_val, 4);
+%     end
+% end
+% 
+% % Stack guesses into a single parameter.guess matrix [EC50; n]
+% parameters.name = [arrayfun(@(i) sprintf('EC50_%d', i), 1:n_params, 'UniformOutput', false), ...
+%                    arrayfun(@(i) sprintf('n_%d', i), 1:n_params, 'UniformOutput', false)];
+% parameters.number = 2 * n_params;
+% parameters.min = [EC50_lower * ones(n_params, 1); n_lower * ones(n_params, 1)];
+% parameters.max = [0.5 * ones(n_params, 1); n_upper * ones(n_params, 1)];
+% 
+% % Flatten the guesses
+% parameters.guess = [EC50_guesses; n_guesses];
+% 
+% disp('Initial EC50 guesses:');
+% disp(EC50_guesses);
+% 
+% disp('Initial n guesses:');
+% disp(n_guesses);
+
+%% Options
 % === Define options ===
 options = PestoOptions();
 options.obj_type        = 'negative log-posterior';
@@ -105,5 +163,5 @@ disp(w_best');
 figure;
 rmse_vals = parameters.MS.logPost;  % logPost = RMSE
 plot(1:length(rmse_vals), rmse_vals, 'o-');
-xlabel('Multi-Start Index'); ylabel('Final RMSE');
-title('Error  per PESTO Start (10 Runs): One TF Rxn');
+xlabel('Multi-Start Index'); ylabel('Final Minimization');
+title('Error per PESTO Start (10 Runs): One TF Rxn');

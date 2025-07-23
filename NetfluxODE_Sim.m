@@ -1,7 +1,8 @@
 function [stimIdx, geneIdx, validatedIdx, ylong_4h, y4h_norm] = NetfluxODE_Sim(w_opt)
+% function [stimIdx, geneIdx, validatedIdx, ylong_4h, y4h_norm] = NetfluxODE_Sim(EC50_opt, n_opt)
 %% Loading Parameters
 % Input Stimuli
-S_in = [0.400, 0.7]; % Stretch Inputs (Baseline, Stimulated), change as necessary
+S_in = [0.375, 0.7]; % Stretch Inputs (Baseline, Stimulated), change as necessary
 
 % Load parameters 
 [params, y0] = NetfluxODE_CaoS_loadParams();
@@ -11,13 +12,15 @@ S_in = [0.400, 0.7]; % Stretch Inputs (Baseline, Stimulated), change as necessar
 stimIdx = find(strcmp(speciesNames, 'Stretch')); 
 geneIdx = find(contains(speciesTypes, 'Gene')); 
 % validatedIdx = 85:654;
-% optIdx = 12:20;
 [validatedIdx, ~, ~] = ParseGeneTFInputs_CaoS(geneIdx);
-% optIdx = [47, 71, 72, 73, 79];
-% optIdx = [24, 44, 45, 46, 47, 48, 55, 56, 57, 64, 65, 66, 67, 68, 71, 72, 73, 79, 80];
-% optIdx = [47, 71, 72, 73, 79];
-% optIdx = [47, 73];
-optIdx = [12:20, 47, 73, 79];
+validatedIdx = 85:654;
+% optIdx = 12:20; % Stretch RXN
+% optIdx = [47, 71, 72, 73, 79]; % NFkB, STAT, MEF2 RXN
+% optIdx = [24, 44, 45, 46, 47, 48, 55, 56, 57, 64, 65, 66, 67, 68, 71, 72,
+% ... 73, 79, 80]; % All TF RXN
+% optIdx = [47, 73]; % Just NFkB Rxn
+optIdx = [12:20, 47, 73, 79]; % NFkB + STAT + Stretch Rxn
+% optIdx = [12:18, 73, 79]; % Sensitivity Top Rxns
 
 % Defining Time-Scale
 tspan = 0:0.1:(24*60); % used for experimental simulation timecourse
@@ -30,6 +33,8 @@ y4h_norm = y4h_MA ./ y0_MA;
 %% Baseline Simulation
 rpar(1,1) = 1; % Set w1 to intial stimulus as necessary
 rpar(1, optIdx) = w_opt; %inputting optimized/guessed weights into the main vector to run the simulations with
+% rpar(2, optIdx) = n_opt;
+% rpar(3, optIdx) = EC50_opt;
 params{1} = rpar;
 [~, y1] = ode15s(@NetfluxODE_CaoS, tspan1, y0, [], params, S_in(1));
 ss = y1(end, :)'; % End ouputs from SS model
