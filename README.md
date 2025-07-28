@@ -1,2 +1,2 @@
-# GRN_Optimization
+# SignalingModel_Optimization
 Thesis Work
